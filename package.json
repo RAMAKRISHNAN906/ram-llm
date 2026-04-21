@@ -1,0 +1,54 @@
+{
+  "name": "ram-llm-desktop",
+  "version": "1.0.0",
+  "description": "RAM LLM - Local AI Desktop App",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "concurrently --kill-others \"npm run backend\" \"npm run frontend\" \"wait-on http://localhost:3000 && node_modules\\electron\\dist\\electron.exe .\"",
+    "backend": "node backend/server.js",
+    "frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "dist": "npm run build && electron-builder",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^28.3.3",
+    "wait-on": "^7.2.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.ramllm.desktop",
+    "productName": "RAM LLM",
+    "copyright": "Ramakrishnan",
+    "directories": {
+      "output": "dist-app"
+    },
+    "files": [
+      "electron/**/*",
+      "backend/**/*",
+      "frontend/dist/**/*",
+      "!node_modules/**/*"
+    ],
+    "extraResources": [
+      { "from": "backend", "to": "backend", "filter": ["**/*", "!node_modules"] },
+      { "from": "frontend/dist", "to": "frontend/dist" }
+    ],
+    "win": {
+      "icon": "frontend/public/logo.png",
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "frontend/public/logo.png",
+      "uninstallerIcon": "frontend/public/logo.png",
+      "installerHeaderIcon": "frontend/public/logo.png",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "RAM LLM"
+    }
+  }
+}
