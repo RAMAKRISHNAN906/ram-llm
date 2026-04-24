@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
+const https = require('https');
 
 const app = express();
 
@@ -8,9 +9,17 @@ const PORT = Number(process.env.PORT || 3001);
 const HF_API_URL = process.env.HF_API_URL || 'https://router.huggingface.co/v1/chat/completions';
 const HF_TOKEN = process.env.HF_TOKEN || '';
 const MODEL = process.env.HF_MODEL || 'deepseek-ai/DeepSeek-R1:fastest';
-const MAX_RETRIES = Number(process.env.MAX_RETRIES || 2);
-const RETRY_DELAY_MS = Number(process.env.RETRY_DELAY_MS || 1500);
+const MAX_RETRIES = Number(process.env.MAX_RETRIES || 1);
+const RETRY_DELAY_MS = Number(process.env.RETRY_DELAY_MS || 800);
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+const HF_TEMPERATURE = Number(process.env.HF_TEMPERATURE || 0.2);
+const HF_MAX_TOKENS = Number(process.env.HF_MAX_TOKENS || 256);
+
+// Reuse TLS connections to reduce handshake overhead across requests.
+const httpsAgent = new https.Agent({
+  keepAlive: true,
+  maxSockets: 50,
+});
 
 app.use(cors({ origin: CORS_ORIGIN === '*' ? true : CORS_ORIGIN }));
 app.use(express.json({ limit: '1mb' }));
@@ -49,6 +58,7 @@ async function streamFromHuggingFace(messages, res, attempt = 1) {
   try {
     const hfRes = await fetch(HF_API_URL, {
       method: 'POST',
+      agent: httpsAgent,
       headers: {
         Authorization: `Bearer ${HF_TOKEN}`,
         'Content-Type': 'application/json',
@@ -56,7 +66,8 @@ async function streamFromHuggingFace(messages, res, attempt = 1) {
       body: JSON.stringify({
         model: MODEL,
         messages,
-        temperature: 0.7,
+        temperature: HF_TEMPERATURE,
+        max_tokens: HF_MAX_TOKENS,
         stream: true,
       }),
     });

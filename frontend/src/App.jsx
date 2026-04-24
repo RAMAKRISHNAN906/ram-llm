@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatWindow from './components/ChatWindow';
 import Login from './components/Login';
@@ -18,6 +18,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
 
   // Batching refs — accumulate tokens, flush to state via rAF
   const tokenBufferRef = useRef('');
@@ -25,6 +26,15 @@ export default function App() {
   const aiMsgIdRef = useRef(null);
   const convIdRef = useRef(null);
   const abortControllerRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(pointer: coarse)');
+    const update = () => setIsTouchDevice(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   const flushTokens = useCallback(() => {
     const tokens = tokenBufferRef.current;
@@ -150,6 +160,22 @@ export default function App() {
           signal: abortController.signal,
         });
 
+        if (!res.ok) {
+          let details = '';
+          try {
+            details = await res.text();
+          } catch {
+            details = '';
+          }
+          throw new Error(
+            `Backend unavailable (${res.status}). ${details || 'Check Render deployment and API URL.'}`
+          );
+        }
+
+        if (!res.body) {
+          throw new Error('Backend returned an empty response body.');
+        }
+
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
@@ -210,6 +236,10 @@ export default function App() {
               if (data.token) {
                 // Accumulate token, flush via rAF (batched)
                 tokenBufferRef.current += data.token;
+                if (/[.!?\n]$/.test(data.token) || tokenBufferRef.current.length > 40) {
+                  flushTokens();
+                  continue;
+                }
                 scheduleFlush();
               }
             } catch {
@@ -233,7 +263,7 @@ export default function App() {
                     ...c,
                     messages: c.messages.map((m) =>
                       m.id === aiMsgId
-                        ? { ...m, content: `⚠️ ${err.message}. Make sure Ollama is running.`, streaming: false }
+                        ? { ...m, content: `⚠️ ${err.message}. Check cloud backend connection.`, streaming: false }
                         : m
                     ),
                   }
@@ -261,14 +291,15 @@ export default function App() {
     [activeId, isLoading, scheduleFlush, flushTokens]
   );
 
-  if (!loggedIn) return <><Cursor /><Login onLogin={() => setLoggedIn(true)} /></>;
+  if (!loggedIn) return <>{!isTouchDevice && <Cursor />}<Login onLogin={() => setLoggedIn(true)} /></>;
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
-      <Cursor />
+    <div className="flex h-dvh w-full overflow-hidden">
+      {!isTouchDevice && <Cursor />}
       <button
-        className="md:hidden fixed top-3 left-3 z-50 w-9 h-9 rounded-xl bg-surface border border-border flex items-center justify-center text-slate-300 shadow-md"
+        className="md:hidden fixed top-3 left-3 z-50 w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-slate-300 shadow-md"
         onClick={() => setSidebarOpen((v) => !v)}
+        aria-label="Toggle sidebar"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -278,7 +309,7 @@ export default function App() {
       <div
         className={`${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 transition-transform duration-200 fixed md:relative z-40 h-full`}
+        } md:translate-x-0 transition-transform duration-200 fixed md:relative z-40 h-full w-[84vw] max-w-[320px] md:w-auto`}
       >
         <Sidebar
           conversations={conversations}

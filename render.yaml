@@ -16,6 +16,10 @@ services:
       - key: CORS_ORIGIN
         value: https://ram-llm.web.app
       - key: MAX_RETRIES
-        value: "2"
+        value: "1"
       - key: RETRY_DELAY_MS
-        value: "1500"
+        value: "800"
+      - key: HF_TEMPERATURE
+        value: "0.2"
+      - key: HF_MAX_TOKENS
+        value: "256"

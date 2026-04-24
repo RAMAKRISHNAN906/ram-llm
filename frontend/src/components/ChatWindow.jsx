@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import ChatBubble from './ChatBubble';
 
 export default function ChatWindow({ messages, onSend, onStop, isLoading }) {
   const [input, setInput] = useState('');
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
+  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoading]);
+    bottomRef.current?.scrollIntoView({ behavior: isMobile ? 'auto' : 'smooth' });
+  }, [messages, isLoading, isMobile]);
 
   const handleSend = () => {
     const trimmed = input.trim();
@@ -39,12 +40,12 @@ export default function ChatWindow({ messages, onSend, onStop, isLoading }) {
   return (
     <div className="flex flex-col flex-1 h-full bg-chat overflow-hidden">
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6">
+      <div className="flex-1 overflow-y-auto px-3 md:px-8 py-4 md:py-6">
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full text-center select-none relative overflow-hidden">
 
             {/* Floating bubbles */}
-            {[...Array(14)].map((_, i) => (
+            {!isMobile && [...Array(14)].map((_, i) => (
               <div key={i} style={{
                 position:'absolute',
                 width: 16 + (i * 13) % 50,
@@ -162,14 +163,14 @@ export default function ChatWindow({ messages, onSend, onStop, isLoading }) {
       </div>
 
       {/* Input bar */}
-      <div className="px-4 md:px-8 py-4 border-t border-border bg-surface/50 backdrop-blur-sm">
-        <div className="flex items-end gap-3 bg-surface border border-border rounded-2xl px-4 py-3 focus-within:border-accent transition-colors duration-200 shadow-lg">
+      <div className="px-3 md:px-8 py-3 md:py-4 border-t border-border bg-surface/50 backdrop-blur-sm pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="flex items-end gap-2 md:gap-3 bg-surface border border-border rounded-2xl px-3 md:px-4 py-2.5 md:py-3 focus-within:border-accent transition-colors duration-200 shadow-lg">
           <textarea
             ref={textareaRef}
             value={input}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
-            placeholder={isLoading ? 'AI is responding...' : 'Message RAM LLM... (Enter to send, Shift+Enter for newline)'}
+            placeholder={isLoading ? 'AI is responding...' : 'Message RAM LLM...'}
             rows={1}
             className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-500 resize-none outline-none leading-relaxed max-h-40"
           />
@@ -179,7 +180,7 @@ export default function ChatWindow({ messages, onSend, onStop, isLoading }) {
             <button
               onClick={onStop}
               title="Stop generating"
-              className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center bg-red-500 hover:bg-red-600 text-white shadow-md shadow-red-500/30 transition-all duration-150 active:scale-95"
+              className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-red-500 hover:bg-red-600 text-white shadow-md shadow-red-500/30 transition-all duration-150 active:scale-95"
             >
               {/* Stop square icon */}
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -191,7 +192,7 @@ export default function ChatWindow({ messages, onSend, onStop, isLoading }) {
               onClick={handleSend}
               disabled={!input.trim()}
               title="Send message"
-              className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 ${
+              className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-150 ${
                 input.trim()
                   ? 'bg-accent hover:bg-accent-hover text-white shadow-md shadow-accent/30 scale-100 active:scale-95'
                   : 'bg-slate-700 text-slate-500 cursor-not-allowed scale-95'
@@ -204,11 +205,13 @@ export default function ChatWindow({ messages, onSend, onStop, isLoading }) {
           )}
         </div>
         <p className="text-xs text-slate-600 text-center mt-2">
-          Running locally · No data sent to the cloud
+          Cloud AI backend · Fast streaming responses
         </p>
       </div>
     </div>
   );
 }
+
+
 
 
