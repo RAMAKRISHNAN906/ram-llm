@@ -4,7 +4,7 @@ RAM LLM with cloud backend on Render + Hugging Face Inference API.
 
 ## Architecture
 - Frontend: Firebase Hosting (`https://ram-llm.web.app`)
-- Backend API: Render web service (`https://ram-llm-api.onrender.com`)
+- Backend API: Render web service (`https://ram-llm.onrender.com`)
 - Model provider: Hugging Face Inference Providers (chat completions)
 
 ## 1) Backend Deploy (Render)
@@ -17,11 +17,14 @@ RAM LLM with cloud backend on Render + Hugging Face Inference API.
    - Start Command: `npm start`
 4. Add environment variables in Render:
    - `HF_TOKEN` = your Hugging Face token
-   - `HF_MODEL` = `deepseek-ai/DeepSeek-R1:fastest`
+   - `HF_MODEL` = `Qwen/Qwen2.5-7B-Instruct`
+   - `HF_FALLBACK_MODEL` = `meta-llama/Llama-3.1-8B-Instruct`
+   - `FIRST_TOKEN_TIMEOUT_MS` = `3000`
    - `HF_API_URL` = `https://router.huggingface.co/v1/chat/completions`
    - `CORS_ORIGIN` = `https://ram-llm.web.app`
-   - `MAX_RETRIES` = `2`
-   - `RETRY_DELAY_MS` = `1500`
+   - `MAX_RETRIES` = `1`
+   - `RETRY_DELAY_MS` = `800`
+   - `HF_MAX_TOKENS` = `180`
 5. Deploy and verify:
    - `https://<your-render-service>.onrender.com/health`
 
@@ -33,7 +36,7 @@ Production API URL is configured in:
 - `frontend/.env.production`
 
 Current value:
-- `VITE_API_BASE_URL=https://ram-llm-api.onrender.com`
+- `VITE_API_BASE_URL=https://ram-llm.onrender.com`
 
 Deploy:
 ```bash

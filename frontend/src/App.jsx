@@ -36,6 +36,29 @@ export default function App() {
     return () => media.removeEventListener('change', update);
   }, []);
 
+  useEffect(() => {
+    if (!loggedIn || !API_BASE_URL) return;
+
+    let cancelled = false;
+    const ping = async () => {
+      try {
+        await fetch(`${API_BASE_URL}/health`, { cache: 'no-store' });
+      } catch {
+        // Keep silent: this is best-effort warm-up.
+      }
+    };
+
+    ping();
+    const interval = setInterval(() => {
+      if (!cancelled) ping();
+    }, 4 * 60 * 1000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [loggedIn]);
+
   const flushTokens = useCallback(() => {
     const tokens = tokenBufferRef.current;
     if (!tokens) return;

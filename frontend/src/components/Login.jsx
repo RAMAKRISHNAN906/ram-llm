@@ -22,8 +22,17 @@ export default function Login({ onLogin }) {
   const [walkPhase, setWalkPhase] = useState(0);
   const [hoverBtn, setHoverBtn] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(max-width: 980px)');
+    const update = () => setIsCompact(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
   useEffect(() => {
     const t = setInterval(() => setWalkPhase(p => (p + 1) % 8), 200);
     return () => clearInterval(t);
@@ -47,10 +56,13 @@ export default function Login({ onLogin }) {
   const la = -legAngles[walkPhase] * 0.7;
   const ra = legAngles[walkPhase] * 0.7;
   const bodyY = [0,-2,-3,-2,0,-2,-3,-2][walkPhase];
+  const cardWidth = isCompact ? 'min(360px, 92vw)' : 'min(430px, 55vw)';
+  const cardPadding = isCompact ? '30px 22px 24px' : '44px 48px 40px';
 
   return (
     <div style={{
-      minHeight: '100vh', width: '100vw', overflow: 'hidden',
+      minHeight: '100dvh', width: '100%', overflowX: 'hidden', overflowY: 'auto',
+      padding: 'clamp(12px, 3vw, 24px) 0',
       background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 40%, #24243e 100%)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: "'Segoe UI', system-ui, sans-serif",
@@ -107,9 +119,11 @@ export default function Login({ onLogin }) {
 
       {/* ── Main content ── */}
       <div style={{
-        display:'flex', alignItems:'flex-end', justifyContent:'center',
-        gap:0, position:'relative', width:'100%', maxWidth:860,
-        padding:'0 24px',
+        display:'flex', alignItems:isCompact ? 'center' : 'flex-end', justifyContent:'center',
+        flexDirection: isCompact ? 'column' : 'row',
+        gap: isCompact ? 18 : 0,
+        position:'relative', width:'100%', maxWidth:860,
+        padding:'0 clamp(14px, 5vw, 24px)',
         opacity: mounted ? 1 : 0,
         transform: mounted ? 'translateY(0)' : 'translateY(30px)',
         transition:'opacity 0.8s ease, transform 0.8s ease',
@@ -117,6 +131,7 @@ export default function Login({ onLogin }) {
 
         {/* ── Animated Character ── */}
         <div style={{
+          display: isCompact ? 'none' : 'block',
           position:'relative', width:200, flexShrink:0,
           transform:`translateY(${isPointing ? -8 : bodyY}px)`,
           transition:'transform 0.2s ease',
@@ -214,9 +229,9 @@ export default function Login({ onLogin }) {
           background:'rgba(255,255,255,0.04)',
           backdropFilter:'blur(24px)',
           border:'1px solid rgba(255,255,255,0.12)',
-          borderRadius:24,
-          padding:'44px 48px 40px',
-          width:430,
+          borderRadius:isCompact ? 20 : 24,
+          padding:cardPadding,
+          width:cardWidth,
           boxShadow:`
             0 0 0 1px rgba(99,102,241,0.2),
             0 24px 80px rgba(0,0,0,0.5),
@@ -234,25 +249,25 @@ export default function Login({ onLogin }) {
           }}/>
 
           {/* Logo + Title */}
-          <div style={{ textAlign:'center', marginBottom:32 }}>
+          <div style={{ textAlign:'center', marginBottom:isCompact ? 24 : 32 }}>
             <div style={{
               display:'inline-flex', alignItems:'center', justifyContent:'center',
-              width:64, height:64, borderRadius:18,
+              width:isCompact ? 56 : 64, height:isCompact ? 56 : 64, borderRadius:18,
               background:'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.3))',
               border:'1px solid rgba(99,102,241,0.4)',
               marginBottom:14,
               boxShadow:'0 0 30px rgba(99,102,241,0.3)',
               animation:'logoPulse 3s ease-in-out infinite',
             }}>
-              <img src="/logo.png" alt="RAM LLM" style={{ width:46, height:46, objectFit:'contain' }}/>
+              <img src="/logo.png" alt="RAM LLM" style={{ width:isCompact ? 40 : 46, height:isCompact ? 40 : 46, objectFit:'contain' }}/>
             </div>
             <h1 style={{
-              color:'#fff', fontSize:26, fontWeight:800, margin:'0 0 6px',
+              color:'#fff', fontSize:isCompact ? 22 : 26, fontWeight:800, margin:'0 0 6px',
               background:'linear-gradient(135deg, #fff 0%, #a78bfa 100%)',
               WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
               letterSpacing:1,
             }}>RAM LLM</h1>
-            <p style={{ color:'rgba(255,255,255,0.45)', fontSize:13, margin:0 }}>
+            <p style={{ color:'rgba(255,255,255,0.45)', fontSize:isCompact ? 12 : 13, margin:0 }}>
               Sign in to your local AI
             </p>
           </div>
@@ -329,12 +344,12 @@ export default function Login({ onLogin }) {
             <button type="submit"
               onMouseEnter={()=>setHoverBtn(true)} onMouseLeave={()=>setHoverBtn(false)}
               style={{
-                marginTop:6, padding:'14px',
+                marginTop:6, padding:isCompact ? '12px' : '14px',
                 borderRadius:12, border:'none',
                 background: hoverBtn
                   ? 'linear-gradient(135deg, #7c3aed, #6366f1, #4f46e5)'
                   : 'linear-gradient(135deg, #6366f1, #7c3aed)',
-                color:'#fff', fontWeight:700, fontSize:15,
+                color:'#fff', fontWeight:700, fontSize:isCompact ? 14 : 15,
                 cursor:'pointer', letterSpacing:0.5,
                 transform: hoverBtn ? 'translateY(-2px)' : 'translateY(0)',
                 boxShadow: hoverBtn
@@ -353,7 +368,7 @@ export default function Login({ onLogin }) {
             </button>
           </form>
 
-          <p style={{ textAlign:'center', color:'rgba(255,255,255,0.2)', fontSize:11, marginTop:24, marginBottom:0, letterSpacing:0.5 }}>
+          <p style={{ textAlign:'center', color:'rgba(255,255,255,0.2)', fontSize:11, marginTop:isCompact ? 18 : 24, marginBottom:0, letterSpacing:0.5 }}>
             RAM LLM · Local AI · Private & Secure
           </p>
         </div>
